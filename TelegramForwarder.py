@@ -49,20 +49,12 @@ class TelegramForwarder:
             messages = await self.client.get_messages(source_chat_id, min_id=last_message_id, limit=None)
 
             for message in reversed(messages):
-                # Check if the message text includes any of the keywords
-                if keywords:
-                    if message.text and any(keyword in message.text.lower() for keyword in keywords):
-                        print(f"Message contains a keyword: {message.text}")
-
-                        # Forward the message to the destination channel
-                        await self.client.send_message(destination_channel_id, message.text)
-
-                        print("Message forwarded")
+                if message.media:
+                    await self.client.send_file(destination_channel_id, message.media, caption=message.text or "")
                 else:
-                        # Forward the message to the destination channel
-                        await self.client.send_message(destination_channel_id, message.text)
+                    await self.client.forward_messages(destination_channel_id, message)
 
-                        print("Message forwarded")
+                print("Message forwarded")
 
 
                 # Update the last message ID
@@ -117,8 +109,7 @@ async def main():
     elif choice == "2":
         source_chat_id = int(input("Enter the source chat ID: "))
         destination_channel_id = int(input("Enter the destination chat ID: "))
-        print("Enter keywords if you want to forward messages with specific keywords, or leave blank to forward every message!")
-        keywords = input("Put keywords (comma separated if multiple, or leave blank): ").split(",")
+        keywords = []
         
         await forwarder.forward_messages_to_channel(source_chat_id, destination_channel_id, keywords)
     else:
